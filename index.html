@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<title>Soil Parameter Tester + Login/Register</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #e0f7fa;
+    margin: 0; padding: 0;
+  }
+  /* Container common */
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 320px;
+    text-align: center;
+    margin: 80px auto;
+  }
+
+  /* Login/Register Form */
+  input[type="text"], input[type="password"], input[type="email"] {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 10px 0 20px;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  button {
+    background-color: #00796b;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+  }
+  button:hover {
+    background-color: #004d40;
+  }
+  .error {
+    color: #e53935;
+    margin-bottom: 12px;
+    min-height: 20px;
+  }
+  .switch-link {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #00796b;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* Profile bar fixed top-right */
+  #profile-bar {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    padding: 5px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    user-select: none;
+    z-index: 9999;
+  }
+  #profile-bar img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid #43a047;
+  }
+  #profile-bar span {
+    font-weight: 600;
+    color: #43a047;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #logout-btn {
+    background: #e53935;
+    border: none;
+    color: white;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  #logout-btn:hover {
+    background: #b71c1c;
+  }
+
+  /* Soil Parameter Tester page */
+  #app-container {
+    display: none;
+    max-width: 600px;
+    margin: 100px auto 60px;
+    padding: 0 15px;
+    text-align: center;
+  }
+  h1 {
+    background: #43a047;
+    color: white;
+    padding: 20px 0;
+    margin: 0 0 30px 0;
+    font-size: 28px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  .card {
+    color: white;
+    padding: 20px;
+    border-radius: 14px;
+    font-size: 20px;
+    font-weight: 500;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 110px;
+  }
+  .card span.value {
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 6px;
+  }
+  .temp     { background-color: #ef6c00; }
+  .humidity { background-color: #039be5; }
+  .ec       { background-color: #43a047; }
+  .ph       { background-color: #ab47bc; }
+  .n        { background-color: #e53935; }
+  .p        { background-color: #3949ab; }
+  .k        { background-color: #8e24aa; }
+  .fert     { background-color: #fbc02d; color: #333; }
+  .status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px auto 30px;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 18px;
+    max-width: 600px;
+  }
+  .led {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: gray;
+    border: 1.5px solid #555;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Responsive mobile */
+  @media (max-width: 480px) {
+    .grid {
+      grid-template-columns: 1fr;
+      padding: 15px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    .card {
+      font-size: 18px;
+      min-height: 100px;
+    }
+    .card span.value {
+      font-size: 22px;
+    }
+    .status {
+      font-size: 16px;
+      gap: 8px;
+    }
+    .led {
+      width: 14px;
+      height: 14px;
+    }
+    #profile-bar {
+      font-size: 12px;
+      padding: 5px 10px;
+      gap: 6px;
+    }
+    #profile-bar span {
+      max-width: 80px;
+    }
+    .container {
+      width: 90vw;
+      margin: 80px auto;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login Form -->
+<div class="container" id="login-container">
+  <h2>เข้าสู่ระบบ</h2>
+  <div id="login-error" class="error"></div>
+  <input type="text" id="login-username" placeholder="ชื่อผู้ใช้" autocomplete="off" />
+  <input type="password" id="login-password" placeholder="รหัสผ่าน" autocomplete="off" />
+  <button id="login-btn">เข้าสู่ระบบ</button>
+  <div class="switch-link" id="show-register">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</div>
+</div>
+
+<!-- Register Form -->
+<div class="container" id="register-container" style="display:none;">
+  <h2>สมัครสมาชิก</h2>
+  <div id="register-error" class="error"></div>
+  <input type="text" id="register-username" placeholder="ชื่อผู้ใช้" autocomplete="off" />
+  <input type="email" id="register-email" placeholder="อีเมล" autocomplete="off" />
+  <input type="password" id="register-password" placeholder="รหัสผ่าน" autocomplete="off" />
+  <input type="password" id="register-password-confirm" placeholder="ยืนยันรหัสผ่าน" autocomplete="off" />
+  <button id="register-btn">สมัครสมาชิก</button>
+  <div class="switch-link" id="show-login">กลับไปหน้าเข้าสู่ระบบ</div>
+</div>
+
+<!-- Profile bar fixed top-right -->
+<div id="profile-bar" style="display:none;">
+  <img src="" alt="Profile Picture" id="profile-pic" />
+  <span id="profile-name"></span>
+  <button id="logout-btn">ออกจากระบบ</button>
+</div>
+
+<!-- Soil Parameter Tester -->
+<div id="app-container" style="display:none;">
+  <h1>🌱 Soil Parameter Tester</h1>
+
+  <div class="status">
+    <div id="led" class="led"></div>
+    <div id="status-text">กำลังตรวจสอบสถานะ...</div>
+  </div>
+
+  <div class="grid">
+    <div class="card temp">
+      <div class="emoji">🌡️</div>
+      Temp
+      <span class="value" id="temp">-- °C</span>
+    </div>
+    <div class="card humidity">
+      <div class="emoji">💧</div>
+      Humidity
+      <span class="value" id="humidity">-- %</span>
+    </div>
+    <div class="card ec">
+      <div class="emoji">⚡</div>
+      EC
+      <span class="value" id="ec">-- μS/cm</span>
+    </div>
+    <div class="card ph">
+      <div class="emoji">🧪</div>
+      pH
+      <span class="value" id="ph">--</span>
+    </div>
+    <div class="card n">
+      <div class="emoji">🌾</div>
+      N
+      <span class="value" id="n">-- mg/kg</span>
+    </div>
+    <div class="card p">
+      <div class="emoji">🥬</div>
+      P
+      <span class="value" id="p">-- mg/kg</span>
+    </div>
+    <div class="card k">
+      <div class="emoji">🍠</div>
+      K
+      <span class="value" id="k">-- mg/kg</span>
+    </div>
+    <div class="card fert">
+      <div class="emoji">🌻</div>
+      Fertility
+      <span class="value" id="fertility">-- mg/kg</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // โหลด users จาก localStorage หรือเริ่มใหม่ถ้าไม่มี
+  let users = JSON.parse(localStorage.getItem('users') || '[]');
+  let currentUser = null;
+
+  // DOM elements
+  const loginContainer = document.getElementById('login-container');
+  const registerContainer = document.getElementById('register-container');
+  const profileBar = document.getElementById('profile-bar');
+  const appContainer = document.getElementById('app-container');
+
+  const loginUsername = document.getElementById('login-username');
+  const loginPassword = document.getElementById('login-password');
+  const loginBtn = document.getElementById('login-btn');
+  const loginError = document.getElementById('login-error');
+  const showRegisterLink = document.getElementById('show-register');
+
+  const registerUsername = document.getElementById('register-username');
+  const registerEmail = document.getElementById('register-email');
+  const registerPassword = document.getElementById('register-password');
+  const registerPasswordConfirm = document.getElementById('register-password-confirm');
+  const registerBtn = document.getElementById('register-btn');
+  const registerError = document.getElementById('register-error');
+  const showLoginLink = document.getElementById('show-login');
+
+  const profilePic = document.getElementById('profile-pic');
+  const profileName = document.getElementById('profile-name');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // ฟังก์ชันโชว์หน้าต่างๆ
+  function showLogin() {
+    loginError.textContent = '';
+    loginUsername.value = '';
+    loginPassword.value = '';
+    loginContainer.style.display = 'block';
+    registerContainer.style.display = 'none';
+    profileBar.style.display = 'none';
+    appContainer.style.display = 'none';
+  }
+
+  function showRegister() {
+    registerError.textContent = '';
+    registerUsername.value = '';
+    registerEmail.value = '';
+    registerPassword.value = '';
+    registerPasswordConfirm.value = '';
+    loginContainer.style.display = 'none';
+    registerContainer.style.display = 'block';
+    profileBar.style.display = 'none';
+    appContainer.style.display = 'none';
+  }
+
+  function showApp() {
+    loginContainer.style.display = 'none';
+    registerContainer.style.display = 'none';
+    profileBar.style.display = 'flex';
+    appContainer.style.display = 'block';
+
+    profilePic.src = currentUser.pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.username)}&background=00796b&color=fff&size=100`;
+    profileName.textContent = currentUser.username;
+
+    refreshAll();
+    if(window.updateInterval) clearInterval(window.updateInterval);
+    window.updateInterval = setInterval(refreshAll, 5000);
+  }
+
+  // เช็คอีเมล
+  function validateEmail(email) {
+    return /\S+@\S+\.\S+/.test(email);
+  }
+
+  // LOGIN
+  loginBtn.addEventListener('click', () => {
+    const username = loginUsername.value.trim();
+    const password = loginPassword.value.trim();
+    loginError.textContent = '';
+
+    if (!username || !password) {
+      loginError.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+      return;
+    }
+
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) {
+      currentUser = user;
+      showApp();
+    } else {
+      loginError.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    }
+  });
+
+  showRegisterLink.addEventListener('click', showRegister);
+
+  // REGISTER
+  registerBtn.addEventListener('click', () => {
+    const username = registerUsername.value.trim();
+    const email = registerEmail.value.trim();
+    const password = registerPassword.value.trim();
+    const passwordConfirm = registerPasswordConfirm.value.trim();
+    registerError.textContent = '';
+
+    if (!username || !email || !password || !passwordConfirm) {
+      registerError.textContent = 'กรุณากรอกข้อมูลให้ครบทุกช่อง';
+      return;
+    }
+    if (password !== passwordConfirm) {
+      registerError.textContent = 'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน';
+      return;
+    }
+    if (users.some(u => u.username === username)) {
+      registerError.textContent = 'ชื่อผู้ใช้นี้มีคนใช้แล้ว';
+      return;
+    }
+    if (!validateEmail(email)) {
+      registerError.textContent = 'รูปแบบอีเมลไม่ถูกต้อง';
+      return;
+    }
+
+    const newUser = {
+      username,
+      email,
+      password,
+      pic: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=00796b&color=fff&size=100`
+    };
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    alert('สมัครสมาชิกเรียบร้อย! กรุณาเข้าสู่ระบบ');
+    showLogin();
+  });
+
+  showLoginLink.addEventListener('click', showLogin);
+
+  // LOGOUT
+  logoutBtn.addEventListener('click', () => {
+    currentUser = null;
+    if(window.updateInterval) clearInterval(window.updateInterval);
+    showLogin();
+  });
+
+  // Blynk API - Data fetching & update
+  const BLYNK_SERVER = 'https://smartbox89.com:9443';
+  const BLYNK_TOKEN = 'Q469xkoThrPC-DNpai-U4wJHk4FYfOBW';
+
+  function updateElementIfChanged(id, newValue) {
+    const el = document.getElementById(id);
+    if (el.textContent !== newValue) {
+      el.textContent = newValue;
+    }
+  }
+  function updateLedIfChanged(color) {
+    const led = document.getElementById('led');
+    if (led.style.backgroundColor !== color) {
+      led.style.backgroundColor = color;
+    }
+  }
+  function updateStatusTextIfChanged(text) {
+    const statusText = document.getElementById('status-text');
+    if (statusText.textContent !== text) {
+      statusText.textContent = text;
+    }
+  }
+  async function fetchBlynkPin(pin) {
+    const url = `${BLYNK_SERVER}/${BLYNK_TOKEN}/get/${pin}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Network response was not ok for pin ${pin}`);
+      const data = await response.json();
+      return data[0];
+    } catch (error) {
+      console.error('Fetch error:', error);
+      return null;
+    }
+  }
+  async function checkStatus() {
+    const url = `${BLYNK_SERVER}/${BLYNK_TOKEN}/isHardwareConnected`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Status check failed');
+      const text = await response.text();
+      if (text.trim() === 'true') {
+        updateLedIfChanged('green');
+        updateStatusTextIfChanged('อุปกรณ์ออนไลน์');
+      } else {
+        updateLedIfChanged('red');
+        updateStatusTextIfChanged('อุปกรณ์ออฟไลน์');
+      }
+    } catch {
+      updateLedIfChanged('gray');
+      updateStatusTextIfChanged('ไม่สามารถตรวจสอบสถานะได้');
+    }
+  }
+  async function updateBlynkData() {
+    const temp = await fetchBlynkPin('V0');
+    const humidity = await fetchBlynkPin('V1');
+    const ec = await fetchBlynkPin('V2');
+    const ph = await fetchBlynkPin('V3');
+    const n = await fetchBlynkPin('V4');
+    const p = await fetchBlynkPin('V5');
+    const k = await fetchBlynkPin('V6');
+    const fertility = await fetchBlynkPin('V7');
+
+    updateElementIfChanged('temp', temp !== null ? `${temp} °C` : '-- °C');
+    updateElementIfChanged('humidity', humidity !== null ? `${humidity} %` : '-- %');
+    updateElementIfChanged('ec', ec !== null ? `${ec} μS/cm` : '-- μS/cm');
+    updateElementIfChanged('ph', ph !== null ? ph : '--');
+    updateElementIfChanged('n', n !== null ? `${n} mg/kg` : '-- mg/kg');
+    updateElementIfChanged('p', p !== null ? `${p} mg/kg` : '-- mg/kg');
+    updateElementIfChanged('k', k !== null ? `${k} mg/kg` : '-- mg/kg');
+    updateElementIfChanged('fertility', fertility !== null ? `${fertility} mg/kg` : '-- mg/kg');
+  }
+
+  async function refreshAll() {
+    await checkStatus();
+    await updateBlynkData();
+  }
+
+  // เริ่มด้วยหน้า Login
+  showLogin();
+
+  // ป้องกันกด F12 และ Ctrl+Shift+I/J/C
+  document.addEventListener('keydown', function(e) {
+    if (
+      e.key === 'F12' ||
+      (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()))
+    ) {
+      e.preventDefault();
+      alert('ไม่อนุญาตให้เปิด Developer Tools');
+    }
+  });
+
+  // ป้องกันคลิกขวา
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+</script>
+
+</body>
+</html>
